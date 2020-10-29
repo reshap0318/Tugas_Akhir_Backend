@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use App\Helpers\helper;
 
 class userController extends Controller
 {
@@ -53,7 +54,10 @@ class userController extends Controller
                 $userPass = $user ? $user->password : null;
                 if(Hash::check($password, $userPass)){
                     $token = $this->changeTokenApi($user);
-                    return $this->MessageSuccess(['token' => $token]);
+                    if($request->filled('device_id')){
+                        helper::updateDeviceId($user->fcm_token,$request->device_id);
+                    }
+                    return $this->MessageSuccess(['token' => $token, 'uid' => $user->fcm_token]);
                 }else{
                     $validator->errors()->add('password','Wrong Password');
                     return $this->MessageError($validator->errors(), 422);
@@ -64,7 +68,9 @@ class userController extends Controller
                 $name = "Reinaldo Shandev P";
                 $user = $this->registerUser($id, $name, $login, $this->siaCode, $password);
                 $token = $this->changeTokenApi($user);
-                return $this->MessageSuccess(['token' => $token]);
+                $uid = helper::firebaseCreateUser(['email'=>$login.'@student.unand.ac.id', 'password'=>$request->password]);
+                $user->update(['fcm_token'=>$uid]);
+                return $this->MessageSuccess(['token' => $token, 'uid'=>$uid]);
             }
         } catch (\Throwable $th) {
             return $this->MessageError($th->getMessage());
