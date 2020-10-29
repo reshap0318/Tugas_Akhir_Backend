@@ -4,6 +4,7 @@
 
 
 $router->get('/', function () use ($router) {
+    return base_path() . '/' . env('FIREBASE_CREDENTIALS');
     return $router->app->version();
 });
 
