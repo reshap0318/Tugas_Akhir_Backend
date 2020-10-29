@@ -3,7 +3,7 @@
 return [
     
     'credentials' => [
-        'file' => env('FIREBASE_CREDENTIALS'),
+        'file' => '/' . env('FIREBASE_CREDENTIALS'),
         'auto_discovery' => true,
     ],
 
