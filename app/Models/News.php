@@ -11,7 +11,7 @@ class News extends Model
     protected $fillable = [
         'id',
         'title',
-        'body'
+        'description'
     ];
 
 }

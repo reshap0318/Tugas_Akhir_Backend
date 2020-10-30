@@ -44,7 +44,7 @@ class newsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title'   => 'required|unique:news,title',
-            'body'    => 'required',
+            'description'    => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -54,7 +54,7 @@ class newsController extends Controller
         try {
             $data = new news();
             $data->title = $request->title;
-            $data->body = $request->body;
+            $data->description = $request->description;
             $data->user_id = app('auth')->user()->id;
             $data->save();
             return $this->MessageSuccess($data);
@@ -67,7 +67,7 @@ class newsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title'   => 'required|unique:news,title,'.$id,
-            'body'    => 'required',
+            'description'    => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -77,7 +77,7 @@ class newsController extends Controller
         try {
             $data = news::find($id);
             $data->title = $request->title;
-            $data->body = $request->body;
+            $data->description = $request->description;
             $data->save();
             return $this->MessageSuccess($data);
         } catch (\Throwable $th) {

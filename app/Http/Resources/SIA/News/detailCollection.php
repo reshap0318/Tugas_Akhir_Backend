@@ -11,7 +11,7 @@ class detailCollection extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
-            'body' => $this->body,
+            'description' => $this->description,
             'user' => '',
             'creted_at' => $this->created_at,
             'updated_at' => $this->updated_at
