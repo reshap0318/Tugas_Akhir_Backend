@@ -6,9 +6,9 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\{Hash, Validator};
 use App\Helpers\helper;
+use App\Http\Resources\User\{profileCollection};
 
 class userController extends Controller
 {
@@ -188,6 +188,17 @@ class userController extends Controller
     public function changeAvatar(Request $request)
     {
         # code...
+    }
+
+    public function profile()
+    {
+        try {
+            $user = app('auth')->user();
+            $user = new profileCollection($user);
+            return $this->MessageSuccess($user);
+        } catch (\Throwable $th) {
+            return $this->MessageError($th->getMessage());
+        }
     }
 
     public function logout()

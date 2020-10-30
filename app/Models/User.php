@@ -33,4 +33,8 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'api_token',
         'fcm_token'
     ];
+
+    protected $dates = [
+        'last_login',
+    ];
 }

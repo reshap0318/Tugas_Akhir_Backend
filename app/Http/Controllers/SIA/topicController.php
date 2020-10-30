@@ -14,8 +14,7 @@ class topicController extends Controller
     {
         try {
             $data = Topic::all();
-            // return $this->MessageSuccess(listCollection::collection($data));
-            return $this->MessageSuccess($data);
+            return $this->MessageSuccess(listCollection::collection($data));
         } catch (\Throwable $th) {
             return $this->MessageError($th->getMessage());
         }
@@ -25,7 +24,7 @@ class topicController extends Controller
     {
         try {
             $data = topic::find($id);
-            return $this->MessageSuccess($data);
+            return $this->MessageSuccess(new detailCollection($data));
         } catch (\Throwable $th) {
             return $this->MessageError($th->getMessage());
         }

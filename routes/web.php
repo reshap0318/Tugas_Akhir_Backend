@@ -2,6 +2,7 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
+use App\Http\Controllers\userController;
 
 $router->get('/', function () use ($router) {
     return [
@@ -63,8 +64,11 @@ $router->group(['prefix' => 'user'], function () use ($router) {
     $router->post('isLogin', ['uses' => 'userController@isLogin']);
     
     $router->group(['middleware' => ['auth']], function () use ($router) {
+        $router->get('profile', ['uses' => 'userController@profile']);
         $router->post('logout', ['uses' => 'userController@logout']);
     });
+
+
 });
 
 
