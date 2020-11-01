@@ -15,7 +15,7 @@ class newsController extends Controller
         try {
             $data = News::all();
             return $this->MessageSuccess(listCollection::collection($data));
-        } catch (\Throwable $th) {
+        } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
     }
@@ -25,7 +25,7 @@ class newsController extends Controller
         try {
             $data = news::find($id);
             return $this->MessageSuccess(new detailCollection($data));
-        } catch (\Throwable $th) {
+        } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
     }
@@ -35,7 +35,7 @@ class newsController extends Controller
         try {
             $data = news::find($id);
             return $this->MessageSuccess($data);
-        } catch (\Throwable $th) {
+        } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
     }
@@ -58,7 +58,7 @@ class newsController extends Controller
             $data->user_id = app('auth')->user()->id;
             $data->save();
             return $this->MessageSuccess($data);
-        } catch (\Throwable $th) {
+        } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
     }
@@ -80,7 +80,7 @@ class newsController extends Controller
             $data->description = $request->description;
             $data->save();
             return $this->MessageSuccess($data);
-        } catch (\Throwable $th) {
+        } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
     }
@@ -91,7 +91,7 @@ class newsController extends Controller
             $data = news::find($id);
             $data->delete();
             return $this->MessageSuccess($data);
-        } catch (\Throwable $th) {
+        } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
     }

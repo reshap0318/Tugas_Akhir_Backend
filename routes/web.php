@@ -5,10 +5,6 @@
 use App\Http\Controllers\userController;
 
 $router->get('/', function () use ($router) {
-    return [
-        'base' => base_path() . '/' . env('FIREBASE_CREDENTIALS'),
-        'non base' => env('FIREBASE_CREDENTIALS')
-    ];
     return $router->app->version();
 });
 
@@ -24,7 +20,7 @@ $router->group(['prefix' => 'sia'], function () use ($router) {
             $router->get('/{id}', ['as'=>'getData', 'uses' => 'newsController@getData']);
             $router->get('/{id}/edit', ['as'=>'edit', 'uses' => 'newsController@edit']);
             $router->post('/save', ['as'=>'save', 'uses' => 'newsController@store']);
-            $router->post('/{id}/update', ['as'=>'update', 'uses' => 'newsController@update']);
+            $router->patch('/{id}/update', ['as'=>'update', 'uses' => 'newsController@update']);
             $router->delete('/{id}/delete', ['as'=>'delete', 'uses' => 'newsController@destroy']);
         });
 
@@ -33,7 +29,7 @@ $router->group(['prefix' => 'sia'], function () use ($router) {
             $router->get('/{id}', ['as'=>'getData', 'uses' => 'topicController@getData']);
             $router->get('/{id}/edit', ['as'=>'edit', 'uses' => 'topicController@edit']);
             $router->post('/save', ['as'=>'save', 'uses' => 'topicController@store']);
-            $router->post('/{id}/update', ['as'=>'update', 'uses' => 'topicController@update']);
+            $router->patch('/{id}/update', ['as'=>'update', 'uses' => 'topicController@update']);
             $router->delete('/{id}/delete', ['as'=>'delete', 'uses' => 'topicController@destroy']);
         });
     });
@@ -65,6 +61,9 @@ $router->group(['prefix' => 'user'], function () use ($router) {
     
     $router->group(['middleware' => ['auth']], function () use ($router) {
         $router->get('profile', ['uses' => 'userController@profile']);
+        $router->patch('change-profile', ['uses' => 'userController@changeProfile']);
+        $router->post('change-avatar', ['uses' => 'userController@changeAvatar']);
+        $router->patch('change-password', ['uses' => 'userController@changePassword']);
         $router->post('logout', ['uses' => 'userController@logout']);
     });
 
