@@ -15,7 +15,7 @@ class topicController extends Controller
         try {
             $data = Topic::all();
             return $this->MessageSuccess(listCollection::collection($data));
-        } catch (\Throwable $th) {
+        } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
     }
@@ -25,7 +25,7 @@ class topicController extends Controller
         try {
             $data = topic::find($id);
             return $this->MessageSuccess(new detailCollection($data));
-        } catch (\Throwable $th) {
+        } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
     }
@@ -35,7 +35,7 @@ class topicController extends Controller
         try {
             $data = topic::find($id);
             return $this->MessageSuccess($data);
-        } catch (\Throwable $th) {
+        } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
     }
@@ -55,7 +55,7 @@ class topicController extends Controller
             $data->name = $request->name;
             $data->save();
             return $this->MessageSuccess($data);
-        } catch (\Throwable $th) {
+        } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
     }
@@ -74,7 +74,7 @@ class topicController extends Controller
             $data->name = $request->name;
             $data->save();
             return $this->MessageSuccess($data);
-        } catch (\Throwable $th) {
+        } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
     }
@@ -85,7 +85,7 @@ class topicController extends Controller
             $data = topic::find($id);
             $data->delete();
             return $this->MessageSuccess($data);
-        } catch (\Throwable $th) {
+        } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
     }

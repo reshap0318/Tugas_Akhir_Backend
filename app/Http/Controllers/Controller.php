@@ -27,4 +27,10 @@ class Controller extends BaseController
             'errors'    => $error,
         ], $kode);
     }
+
+    public function DefaultAvatar($bg="0D8ABC", $cl="fff")
+    {
+        $name = app('auth')->user()->name;
+        return "https://ui-avatars.com/api/?background=$bg&color=$cl&name=".urlencode($name);
+    }
 }

@@ -12,7 +12,7 @@ class profileCollection extends JsonResource
             'id'            => $this->id,
             'name'          => $this->name,
             'email'         => $this->email,
-            'avatar'        => $this->avatar,
+            'avatar'        => $this->avatar ? $this->getAvatar() : "https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=".urlencode($this->name),
             'last_login'    => $this->last_login->diffForHumans(),
             'role'          => $this->role,
             'creted_at'     => $this->created_at,

@@ -37,4 +37,15 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     protected $dates = [
         'last_login',
     ];
+
+    public function FileNameAvatar()
+    {
+        $id = $this->id ? $this->id : "not-found";
+        return uniqid("avatar-user-".$id."-");
+    }
+
+    public function getAvatar()
+    {
+        return config('app.url')."/storage/".$this->avatar;
+    }
 }
