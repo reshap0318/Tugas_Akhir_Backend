@@ -38,7 +38,11 @@ class storageLink extends Command
     public function handle()
     {
         try {
-            app()->make('files')->link(storage_path('app/public'), $this->public_path('storage'));
+            $file = $this->public_path('storage');
+            if(is_dir($file)){
+                rmdir($file);
+            }
+            app()->make('files')->link(storage_path('app/public'), $file);
             echo "link file to public";
         } catch (\Exception $e) {
             echo "Fail : ".$e->getMessage();
