@@ -141,10 +141,10 @@ class userController extends Controller
                 $old_avatar = $user->avatar;
                 $fileext = $request->avatar->extension();
                 $filename = $user->FileNameAvatar().'.'.$fileext;
-                $user->avatar = $request->file('avatar')->storeAs('avatars', $filename,'public');
+                $user->avatar = $request->file('avatar')->storeAs('avatars', $filename,'local');
                 $user->update();
                 if($old_avatar){
-                    Storage::disk('public')->delete($old_avatar);
+                    Storage::disk('local')->delete($old_avatar);
                 }
                 return $this->MessageSuccess($user);
             }
