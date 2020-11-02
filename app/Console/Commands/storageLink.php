@@ -40,6 +40,7 @@ class storageLink extends Command
         try {
             $file = $this->public_path('storage');
             if(is_dir($file)){
+                app()->make('files')->deleteDirectory($file, true);
                 rmdir($file);
             }
             app()->make('files')->link(storage_path('app/public'), $file);
