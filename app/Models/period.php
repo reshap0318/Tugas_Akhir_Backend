@@ -4,13 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Topic extends Model
+class period extends Model
 {
-    protected $table = 'topics';
+    protected $table = 'periods';
 
     protected $fillable = [
         'id',
+        'slug',
         'name',
-        'period_id'
+        'unit_id'
     ];
 }

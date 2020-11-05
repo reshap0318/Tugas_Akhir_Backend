@@ -6,7 +6,7 @@ use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 
 
-class helper
+class firebase
 {
 
     public static function firebaseCreateUser(array $data)

@@ -20,10 +20,11 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     protected $fillable = [
         'id',
         'name',
-        'email',
-        'role',
+        'username',
         'avatar',
         'last_login',
+        'role',
+        'unit_id',
         'password',
         'api_token',
         'fcm_token'

@@ -7,7 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Hash, Validator, Storage};
-use App\Helpers\helper;
+use App\Helpers\firebase;
 use App\Http\Resources\User\{profileCollection};
 
 class userController extends Controller
@@ -81,7 +81,7 @@ class userController extends Controller
             if(Hash::check($password, $userPass)){
                 $token = $this->changeTokenApi($user);
                 if($request->filled('device_id')){
-                    helper::updateDeviceId($user->fcm_token,$request->device_id);
+                    firebase::updateDeviceId($user->fcm_token,$request->device_id);
                 }
                 return $this->MessageSuccess(['token' => $token, 'uid' => $user->fcm_token]);
             }else{
@@ -94,10 +94,10 @@ class userController extends Controller
             $name = "Reinaldo Shandev P";
             $user = $this->registerUser($id, $name, $login, $code_id, $password);
             $token = $this->changeTokenApi($user);
-            $uid = helper::firebaseCreateUser(['email'=>$login.'@student.unand.ac.id', 'password'=>$request->password]);
+            $uid = firebase::firebaseCreateUser(['email'=>$login.'@student.unand.ac.id', 'password'=>$request->password]);
             $user->update(['fcm_token'=>$uid]);
             if($request->filled('device_id')){
-                helper::updateDeviceId($uid,$request->device_id);
+                firebase::updateDeviceId($uid,$request->device_id);
             }
             return $this->MessageSuccess(['token' => $token, 'uid'=>$uid]);
         }
