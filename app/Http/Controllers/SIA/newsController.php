@@ -13,7 +13,8 @@ class newsController extends Controller
     public function getList(Request $request)
     {
         try {
-            $data = News::all();
+            $id  = app('auth')->user()->unit_id;
+            $data = News::whereRAW("unit_id in (SELECT id FROM `units` where id=$id or id in (select unit_id from units where id=$id)) or unit_id is null")->get();
             return $this->MessageSuccess(listCollection::collection($data));
         } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
@@ -23,7 +24,7 @@ class newsController extends Controller
     public function getData($id)
     {
         try {
-            $data = news::find($id);
+            $data = News::find($id);
             return $this->MessageSuccess(new detailCollection($data));
         } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
@@ -33,7 +34,7 @@ class newsController extends Controller
     public function edit($id)
     {
         try {
-            $data = news::find($id);
+            $data = News::find($id);
             return $this->MessageSuccess($data);
         } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
@@ -55,7 +56,7 @@ class newsController extends Controller
             $data = new news();
             $data->title = $request->title;
             $data->description = $request->description;
-            $data->user_id = app('auth')->user()->id;
+            $data->unit_id = app('auth')->user()->unit_id;
             $data->save();
             return $this->MessageSuccess($data);
         } catch (\Exception $th) {

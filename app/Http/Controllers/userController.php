@@ -7,8 +7,9 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Hash, Validator, Storage};
-use App\Helpers\firebase;
+use App\Helpers\{firebase, siaWeb};
 use App\Http\Resources\User\{profileCollection};
+use App\Models\unit;
 
 class userController extends Controller
 {
@@ -21,10 +22,10 @@ class userController extends Controller
         -validasi v
         -login ke server local v
         --berhasil > login v
-        --gagal > login ke server sia x
-        -login ke server sia x
-        --berhasil > simpan data id, email?, pass v
-        --gagal > gagal x
+        --gagal > login ke server sia v
+        -login ke server sia v
+        --berhasil > simpan data id, username?, pass v
+        --gagal > gagal v
 
         note : masing bingun untuk kondisi simpan data, karna sekarang saat user tidak ketemu saat login, data user langsung tersimpan, takutnya nanti, saat yang login data mahasiswa login ke dosen, maka data mahasiswa akan tersimpan ke data dosen, karna datanya dosen belum ada data yang mahasiswa, untuk mengatasinya, mungkin tambahkan role login saat login ke websia, atau perbaiki where login.
     */
@@ -73,7 +74,7 @@ class userController extends Controller
         $user = user::where(function ($query) use ($code_id) {
             $query->where('role', $code_id);
         })->Where(function($query) use($login) {
-            $query->where('id',$login)->orWhere('email',$login);
+            $query->where('username',$login);
         })->first();
 
         if($user){
@@ -90,25 +91,45 @@ class userController extends Controller
             }
         }
         else{
-            $id = rand(1000000000,9999999999);
-            $name = "Reinaldo Shandev P";
-            $user = $this->registerUser($id, $name, $login, $code_id, $password);
-            $token = $this->changeTokenApi($user);
-            $uid = firebase::firebaseCreateUser(['email'=>$login.'@student.unand.ac.id', 'password'=>$request->password]);
-            $user->update(['fcm_token'=>$uid]);
-            if($request->filled('device_id')){
-                firebase::updateDeviceId($uid,$request->device_id);
+            $link = "v1/mahasiswa";
+            if($code_id==$this->siaCode){
+                $link = "v1/admin";
+            }elseif($code_id==$this->dosenCode){
+                $link = "v1/dosen";
             }
-            return $this->MessageSuccess(['token' => $token, 'uid'=>$uid]);
+            $data = siaWeb::get($link."/".$login);
+            if($data){
+                $name = $data->data->nama;
+                $unit = unit::where('name',$data->data->nama_jurusan)->first();
+                if($unit){
+                    $unitId = $unit->id;
+                }else{
+                    $validator->errors()->add('login','Fakultas Or Jurusan NotFound');
+                    return $this->MessageError($validator->errors(), 422);
+                }
+                $user = $this->registerUser($name, $login, $unitId, $code_id, $password);
+                $token = $this->changeTokenApi($user);
+                // $uid = firebase::firebaseCreateUser(['email'=>$login.'@student.unand.ac.id', 'password'=>$request->password]);
+                $uid = Str::random(20);
+                $user->update(['fcm_token'=>$uid]);
+                if($request->filled('device_id')){
+                    firebase::updateDeviceId($uid,$request->device_id);
+                }
+                return $this->MessageSuccess(['token' => $token, 'uid'=>$uid]);
+            }else{
+                $validator->errors()->add('login','This Login Not Found in Database SIA');
+                return $this->MessageError($validator->errors(), 422);
+            }
+            
         }
     }
 
-    public function registerUser($id, $name, $email, $code, $pass)
+    public function registerUser($name, $username, $unit_id ,$code, $pass)
     {
         $user = new User();
-        $user->id = $id;
         $user->name = $name;
-        $user->email = $email;
+        $user->username = $username;
+        $user->unit_id = $unit_id;
         $user->role = $code;
         $user->password = Hash::make($pass);
         $user->save();
@@ -169,7 +190,7 @@ class userController extends Controller
         $user = app('auth')->user();
         $validator = Validator::make($request->all(), [
             'name'  => 'required',
-            'email' => 'required|unique:users,email,'.$user->id,
+            'username' => 'required|unique:users,username,'.$user->id,
         ]);
 
         if ($validator->fails()) {
@@ -178,7 +199,7 @@ class userController extends Controller
 
         try {
             $user->name = $request->name;
-            $user->email = $request->email;
+            $user->username = $request->username;
             $user->update();
             return $this->MessageSuccess($user);
         } catch (\Exception $th) {

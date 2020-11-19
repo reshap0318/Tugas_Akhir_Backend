@@ -4,14 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class period extends Model
+class Period extends Model
 {
     protected $table = 'periods';
 
     protected $fillable = [
         'id',
-        'slug',
-        'name',
-        'unit_id'
+        'name'
     ];
+
+    public function topics()
+    {
+        return $this->belongsToMany(Topic::class, 'period_topics', 'topic_id', 'period_id');
+    }
 }

@@ -9,16 +9,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Lumen\Auth\Authorizable;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class User extends Model implements AuthenticatableContract, AuthorizableContract
 {
     use Authenticatable, Authorizable, HasFactory;
 
     protected $table = 'users';
+    protected $primaryKey = 'id';
     public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
-        'id',
+        // 'id',
         'name',
         'username',
         'avatar',
@@ -55,5 +58,13 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         }
         return "https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=".urlencode($this->name);
         
+    }
+
+    public static function boot()
+    {
+        parent::boot();
+        self::creating(function ($model) {
+            $model->id = Str::random(5);
+        });
     }
 }

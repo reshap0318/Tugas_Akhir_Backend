@@ -4,20 +4,21 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Helpers\siaWeb;
-use App\Models\unit;
+use App\Models\{Period};
 
-class UnitSeeder extends Seeder
+class PeriodSeeder extends Seeder
 {
+
     public function run()
     {
-        $data = siaWeb::get("v1/units");
+        $data = siaWeb::get("v1/list-semester");
         if($data){
-            $datas = $data->data->units;
+            $datas = $data->data;
             foreach ($datas as $data) {
-                unit::create([
+                $siaName = $data->periode." ".$data->tahun;
+                Period::create([
                     'id' => $data->id,
-                    'name' => $data->name,
-                    'unit_id' => $data->unit_id
+                    'name' => $siaName
                 ]);
             }
         }

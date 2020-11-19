@@ -5,16 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class Topic extends Model
+class PeriodTopic extends Model
 {
-    protected $table = 'topics';
+    protected $table = 'period_topics';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
         'id',
-        'name'
+        'period_id',
+        'topic_id'
     ];
 
     public static function boot()

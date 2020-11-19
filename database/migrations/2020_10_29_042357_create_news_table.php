@@ -14,10 +14,10 @@ class CreateNewsTable extends Migration
     public function up()
     {
         Schema::create('news', function (Blueprint $table) {
-            $table->id();
+            $table->string('id',5)->primary();
             $table->string('title');
             $table->text('description');
-            $table->foreignId('unit_id')->constrained();
+            $table->foreignId('unit_id')->nullable()->constrained();
             $table->timestamps();
 
             // $table->foreign('unit_id')->references('id')->on('units')->onDelete('cascade')->onUpdate('cascade');

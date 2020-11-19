@@ -9,11 +9,11 @@ class CreateTopicsTable extends Migration
     public function up()
     {
         Schema::create('topics', function (Blueprint $table) {
-            $table->id();
+            $table->string('id',5)->primary();
             $table->string('name');
-            $table->foreignId('period_id')->constrained();
             $table->timestamps();
 
+            // $table->foreignId('period_id')->constrained();
             // $table->foreign('period_id')->references('id')->on('periods')->onDelete('cascade')->onUpdate('cascade');
         });
     }

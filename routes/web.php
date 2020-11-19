@@ -12,6 +12,16 @@ $router->group(['prefix' => 'sia'], function () use ($router) {
     // 'middleware' => ['auth','role:sia']
     $router->group(['namespace' => 'SIA', 'middleware' => ['auth','role:1'], 'as' => 'sia'], function () use ($router) {
         $router->get('/', ['uses' => 'myController@index']);
+        $router->group(['prefix' => 'unit', 'as' => 'unit'], function () use ($router){
+            $router->get('/', ['as'=>'getList', 'uses' => 'unitController@getList']);
+            $router->post('/syn', ['as' => 'syn','uses' => 'unitController@syn']);
+        });
+        $router->group(['prefix' => 'period', 'as' => 'period'], function () use ($router){
+            $router->get('/', ['as'=>'getList', 'uses' => 'periodController@getList']);
+            $router->post('/{id}/add-topic', ['as' => 'syn','uses' => 'periodController@addTopic']);
+            $router->delete('/{id}/delete-topic', ['as' => 'syn','uses' => 'periodController@deleteTopic']);
+            $router->post('/syn', ['as' => 'syn','uses' => 'periodController@syn']);
+        });
 
         $router->group(['prefix' => 'news', 'as' => 'news'], function () use ($router) {
             $router->get('/', ['as'=>'getList', 'uses' => 'newsController@getList']);
@@ -24,6 +34,7 @@ $router->group(['prefix' => 'sia'], function () use ($router) {
 
         $router->group(['prefix' => 'topic', 'as' => 'topic'], function () use ($router) {
             $router->get('/', ['as'=>'getList', 'uses' => 'topicController@getList']);
+            $router->get('/actif', ['as'=>'getListActif', 'uses' => 'topicController@getListActif']);
             $router->get('/{id}', ['as'=>'getData', 'uses' => 'topicController@getData']);
             $router->get('/{id}/edit', ['as'=>'edit', 'uses' => 'topicController@edit']);
             $router->post('/save', ['as'=>'save', 'uses' => 'topicController@store']);

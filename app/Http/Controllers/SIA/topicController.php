@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Resources\SIA\Topic\{detailCollection, listCollection};
 use App\Models\{Topic};
 use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\SIA\periodController;
 
 class topicController extends Controller
 {
@@ -14,7 +15,8 @@ class topicController extends Controller
     {
         try {
             $data = Topic::all();
-            return $this->MessageSuccess(listCollection::collection($data));
+            $data = listCollection::collection($data);
+            return $this->MessageSuccess($data);
         } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
@@ -24,7 +26,8 @@ class topicController extends Controller
     {
         try {
             $data = topic::find($id);
-            return $this->MessageSuccess(new detailCollection($data));
+            $data = $data ? new detailCollection($data) : [];
+            return $this->MessageSuccess($data);
         } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
@@ -43,7 +46,7 @@ class topicController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'   => 'required|unique:news,title',
+            'name'   => 'required|unique:news,title'
         ]);
 
         if ($validator->fails()) {
@@ -63,7 +66,7 @@ class topicController extends Controller
     public function update($id, Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'   => 'required|unique:news,title,'.$id,
+            'name'   => 'required|unique:news,title,'.$id
         ]);
 
         if ($validator->fails()) {
@@ -87,6 +90,22 @@ class topicController extends Controller
             return $this->MessageSuccess($data);
         } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
+        }
+    }
+
+    public function getListActif()
+    {
+        try {
+            $periodeController = new periodController();
+            $periodAktif = $periodeController->periodAktif();
+            $data = [];
+            if($periodAktif){
+                $data = Topic::whereRAW("id in (select topic_id from period_topics where period_id = '".$periodAktif->id."')")->get();
+                $data = listCollection::collection($data);
+            }
+            return $this->MessageSuccess($data);
+        } catch (\Exception $e) {
+            return $this->MessageError($e->getMessage());
         }
     }
 }
