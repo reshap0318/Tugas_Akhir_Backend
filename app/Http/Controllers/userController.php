@@ -91,46 +91,18 @@ class userController extends Controller
             }
         }
         else{
-            $link = "v1/mahasiswa";
-            if($code_id==$this->siaCode){
-                $link = "v1/admin";
-            }elseif($code_id==$this->dosenCode){
-                $link = "v1/dosen";
-            }
-            $data = siaWeb::get($link."/".$login);
-            if($data){
-                $name = $data->data->nama;
-                $unit = unit::where('name',$data->data->nama_jurusan)->first();
-                if($unit){
-                    $unitId = $unit->id;
-                }else{
-                    $validator->errors()->add('login','Fakultas Or Jurusan NotFound');
-                    return $this->MessageError($validator->errors(), 422);
-                }
-                $user = $this->registerUser($name, $login, $unitId, $code_id, $password);
-                $token = $this->changeTokenApi($user);
-                // $uid = firebase::firebaseCreateUser(['email'=>$login.'@student.unand.ac.id', 'password'=>$request->password]);
-                $uid = Str::random(20);
-                $user->update(['fcm_token'=>$uid]);
-                if($request->filled('device_id')){
-                    firebase::updateDeviceId($uid,$request->device_id);
-                }
-                return $this->MessageSuccess(['token' => $token, 'uid'=>$uid]);
-            }else{
-                $validator->errors()->add('login','This Login Not Found in Database SIA');
-                return $this->MessageError($validator->errors(), 422);
-            }
-            
+            $validator->errors()->add('username','User Not Found');
+            return $this->MessageError($validator->errors(), 422);       
         }
     }
 
-    public function registerUser($name, $username, $unit_id ,$code, $pass)
+    public function registerUser($name, $username, $unit_id ,$role_id, $pass)
     {
         $user = new User();
         $user->name = $name;
         $user->username = $username;
         $user->unit_id = $unit_id;
-        $user->role = $code;
+        $user->role = $role_id;
         $user->password = Hash::make($pass);
         $user->save();
         return $user;
@@ -162,10 +134,10 @@ class userController extends Controller
                 $old_avatar = $user->avatar;
                 $fileext = $request->avatar->extension();
                 $filename = $user->FileNameAvatar().'.'.$fileext;
-                $user->avatar = $request->file('avatar')->storeAs('avatars', $filename,'local');
+                $user->avatar = $request->file('avatar')->storeAs('avatars', $filename,'public');
                 $user->update();
                 if($old_avatar){
-                    Storage::disk('local')->delete($old_avatar);
+                    Storage::disk('public')->delete($old_avatar);
                 }
                 return $this->MessageSuccess($user);
             }

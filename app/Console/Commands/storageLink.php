@@ -43,8 +43,13 @@ class storageLink extends Command
                 app()->make('files')->deleteDirectory($file, true);
                 rmdir($file);
             }
-            app()->make('files')->link(storage_path('app/public'), $file);
-            echo "link file to public";
+            $publicPath = storage_path('app/public');
+            if(is_dir($publicPath)){
+                app()->make('files')->link($publicPath, $file);
+                echo "link file to public";
+            }else{
+                echo "Public File Not Found";
+            }
         } catch (\Exception $e) {
             echo "Fail : ".$e->getMessage();
         }
