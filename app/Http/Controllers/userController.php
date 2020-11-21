@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\{User, Period};
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Hash, Validator, Storage};
 use App\Helpers\{firebase, siaWeb};
-use App\Http\Resources\User\{profileCollection};
-use App\Models\unit;
+use App\Http\Resources\{profileCollection};
 
 class userController extends Controller
 {
@@ -84,14 +83,19 @@ class userController extends Controller
                 if($request->filled('device_id')){
                     firebase::updateDeviceId($user->fcm_token,$request->device_id);
                 }
-                return $this->MessageSuccess(['token' => $token, 'uid' => $user->fcm_token]);
+                $semesterAktif = $this->periodAktif();
+                return $this->MessageSuccess([
+                    'token' => $token, 
+                    'uid' => $user->fcm_token,
+                    'semester_aktif' => "Semester ".$semesterAktif->periode
+                ]);
             }else{
                 $validator->errors()->add('password','Wrong Password');
                 return $this->MessageError($validator->errors(), 422);
             }
         }
         else{
-            $validator->errors()->add('username','User Not Found');
+            $validator->errors()->add('login','User Not Found');
             return $this->MessageError($validator->errors(), 422);       
         }
     }
@@ -233,6 +237,24 @@ class userController extends Controller
             return $this->MessageError(['isLogin'=>false],401);
         } catch (\Exception $th) {
             return $this->MessageError(['isLogin'=>false],401);
+        }
+    }
+
+    public function periodAktif()
+    {
+        try {
+            $dataSia = siaWeb::get('v1/semester-aktif');
+            if($dataSia){
+                return $dataSia->data;
+            }
+            $lastPeriod = Period::latest('id')->first();
+            return json_decode(json_encode([
+                'id' => $lastPeriod->id,
+                'tahun' => explode(" ",$lastPeriod->name)[1],
+                'periode' => explode(" ",$lastPeriod->name)[0]
+            ]));
+        } catch (\Exception $e) {
+            return false;
         }
     }
 }

@@ -54,7 +54,8 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         
         $patlink = rtrim(app()->basePath('public/storage'), '/');
         if($this->avatar && is_dir($patlink) && Storage::disk('public')->exists($this->avatar)){
-            return config('app.url')."/storage/".$this->avatar;
+            return url("/storage/".$this->avatar);
+            // return config('app.url')."/storage/".$this->avatar;
         }
         return "https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=".urlencode($this->name);
         

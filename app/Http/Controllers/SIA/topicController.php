@@ -4,10 +4,10 @@ namespace App\Http\Controllers\SIA;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Resources\SIA\Topic\{detailCollection, listCollection};
+use App\Http\Resources\Topic\{detailCollection, listCollection};
 use App\Models\{Topic};
 use Illuminate\Support\Facades\Validator;
-use App\Http\Controllers\SIA\periodController;
+use App\Http\Controllers\userController;
 
 class topicController extends Controller
 {
@@ -46,7 +46,7 @@ class topicController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'   => 'required|unique:news,title'
+            'name'   => 'required|unique:topics,name'
         ]);
 
         if ($validator->fails()) {
@@ -66,7 +66,7 @@ class topicController extends Controller
     public function update($id, Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'   => 'required|unique:news,title,'.$id
+            'name'   => 'required|unique:topics,name,'.$id
         ]);
 
         if ($validator->fails()) {
@@ -96,8 +96,8 @@ class topicController extends Controller
     public function getListActif()
     {
         try {
-            $periodeController = new periodController();
-            $periodAktif = $periodeController->periodAktif();
+            $userController = new userController();
+            $periodAktif = $userController->periodAktif();
             $data = [];
             if($periodAktif){
                 $data = Topic::whereRAW("id in (select topic_id from period_topics where period_id = '".$periodAktif->id."')")->get();

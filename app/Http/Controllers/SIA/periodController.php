@@ -93,17 +93,4 @@ class periodController extends Controller
             return $this->MessageError($e->getMessage());
         }
     }
-
-    public function periodAktif()
-    {
-        try {
-            $dataSia = siaWeb::get('v1/semester-aktif');
-            if($dataSia){
-                return $dataSia->data;
-            }
-            return false;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
 }

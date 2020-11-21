@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources\SIA\News;
+namespace App\Http\Resources\Topic;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -10,9 +10,7 @@ class detailCollection extends JsonResource
     {
         return [
             'id' => $this->id,
-            'title' => $this->title,
-            'description' => $this->description,
-            'unit' => $this->unit ? $this->unit->name : "Universitas Andalas",
+            'name' => $this->name,
             'creted_at' => $this->created_at,
             'updated_at' => $this->updated_at
         ];
