@@ -48,10 +48,6 @@ $app->singleton(
     App\Console\Kernel::class
 );
 
-$app->singleton('filesystem', function ($app) { 
-    return $app->loadComponent('filesystems', 'Illuminate\Filesystem\FilesystemServiceProvider', 'filesystem');
-});
-
 /*
 |--------------------------------------------------------------------------
 | Register Config Files
@@ -65,7 +61,7 @@ $app->singleton('filesystem', function ($app) {
 
 $app->configure('app');
 $app->configure('setting');
-$app->configure('filesystem');
+$app->configure('filesystems');
 $app->configure('firebase');
 
 /*
@@ -102,8 +98,10 @@ $app->routeMiddleware([
 
 $app->register(App\Providers\AppServiceProvider::class);
 $app->register(App\Providers\AuthServiceProvider::class);
+$app->register(App\Providers\EventServiceProvider::class);
 $app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
 $app->register(Kreait\Laravel\Firebase\ServiceProvider::class);
+$app->register(Illuminate\Filesystem\FilesystemServiceProvider::class);
 // $app->register(App\Providers\EventServiceProvider::class);
 
 /*

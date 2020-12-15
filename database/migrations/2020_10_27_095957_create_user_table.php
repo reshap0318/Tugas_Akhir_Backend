@@ -14,16 +14,19 @@ class CreateUserTable extends Migration
     public function up()
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->string('id',10)->primary();
+            $table->string('id',5)->primary();
             $table->string('name',32);
-            $table->string('email',32)->unique();
+            $table->string('username',32)->unique();
             $table->string('avatar')->nullable();
             $table->timestamp('last_login')->nullable();
             $table->tinyInteger('role');
+            $table->foreignId('unit_id')->constrained();
             $table->string('password');
             $table->string('api_token')->nullable();
             $table->string('fcm_token')->nullable();
             $table->timestamps();
+
+            // $table->foreign('unit_id')->references('id')->on('units')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 

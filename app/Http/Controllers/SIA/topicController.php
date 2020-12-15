@@ -4,9 +4,10 @@ namespace App\Http\Controllers\SIA;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Resources\SIA\Topic\{detailCollection, listCollection};
-use App\Models\{Topic};
+use App\Http\Resources\Topic\{detailCollection, listCollection, ActiveCollection};
+use App\Models\{Topic, PeriodTopic};
 use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\semesterController;
 
 class topicController extends Controller
 {
@@ -14,7 +15,8 @@ class topicController extends Controller
     {
         try {
             $data = Topic::all();
-            return $this->MessageSuccess(listCollection::collection($data));
+            $data = listCollection::collection($data);
+            return $this->MessageSuccess($data);
         } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
@@ -24,7 +26,8 @@ class topicController extends Controller
     {
         try {
             $data = topic::find($id);
-            return $this->MessageSuccess(new detailCollection($data));
+            $data = $data ? new detailCollection($data) : [];
+            return $this->MessageSuccess($data);
         } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
@@ -43,7 +46,7 @@ class topicController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'   => 'required|unique:news,title',
+            'name'   => 'required|unique:topics,name'
         ]);
 
         if ($validator->fails()) {
@@ -63,7 +66,7 @@ class topicController extends Controller
     public function update($id, Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'   => 'required|unique:news,title,'.$id,
+            'name'   => 'required|unique:topics,name,'.$id
         ]);
 
         if ($validator->fails()) {
@@ -87,6 +90,40 @@ class topicController extends Controller
             return $this->MessageSuccess($data);
         } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
+        }
+    }
+
+    public function getListActive()
+    {
+        try {
+            $semesterController = new semesterController();
+            $periodAktif = $semesterController->active();
+            $data = [];
+            if($periodAktif){
+                $idPeriod = $periodAktif->original['data']->id;
+                $data = PeriodTopic::where("period_id",$idPeriod)->get();
+                $data = ActiveCollection::collection($data);
+            }
+            return $this->MessageSuccess($data);
+        } catch (\Exception $e) {
+            return $this->MessageError($e->getMessage());
+        }
+    }
+
+    public function getListDeactive()
+    {
+        try {
+            $semesterController = new semesterController();
+            $periodAktif = $semesterController->active();
+            $data = [];
+            if($periodAktif){
+                $idPeriod = $periodAktif->original['data']->id;
+                $data = Topic::whereRaw("id not in (select topic_id from period_topics where period_id = $idPeriod)")->get();
+                $data = listCollection::collection($data);
+            }
+            return $this->MessageSuccess($data);
+        } catch (\Exception $e) {
+            return $this->MessageError($e->getMessage());
         }
     }
 }

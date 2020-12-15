@@ -1,18 +1,16 @@
 <?php
 
-namespace App\Http\Resources\SIA\News;
+namespace App\Http\Resources\Topic;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class detailCollection extends JsonResource
+class listCollection extends JsonResource
 {
     public function toArray($request)
     {
         return [
             'id' => $this->id,
-            'title' => $this->title,
-            'description' => $this->description,
-            'user' => '',
+            'name' => $this->name,
             'creted_at' => $this->created_at,
             'updated_at' => $this->updated_at
         ];

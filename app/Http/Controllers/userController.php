@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\{User};
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Hash, Validator, Storage};
-use App\Helpers\helper;
-use App\Http\Resources\User\{profileCollection};
+use App\Helpers\{firebase};
+use App\Http\Resources\{profileCollection};
 
 class userController extends Controller
 {
@@ -21,10 +21,10 @@ class userController extends Controller
         -validasi v
         -login ke server local v
         --berhasil > login v
-        --gagal > login ke server sia x
-        -login ke server sia x
-        --berhasil > simpan data id, email?, pass v
-        --gagal > gagal x
+        --gagal > login ke server sia v
+        -login ke server sia v
+        --berhasil > simpan data id, username?, pass v
+        --gagal > gagal v
 
         note : masing bingun untuk kondisi simpan data, karna sekarang saat user tidak ketemu saat login, data user langsung tersimpan, takutnya nanti, saat yang login data mahasiswa login ke dosen, maka data mahasiswa akan tersimpan ke data dosen, karna datanya dosen belum ada data yang mahasiswa, untuk mengatasinya, mungkin tambahkan role login saat login ke websia, atau perbaiki where login.
     */
@@ -73,7 +73,7 @@ class userController extends Controller
         $user = user::where(function ($query) use ($code_id) {
             $query->where('role', $code_id);
         })->Where(function($query) use($login) {
-            $query->where('id',$login)->orWhere('email',$login);
+            $query->where('username',$login);
         })->first();
 
         if($user){
@@ -81,35 +81,33 @@ class userController extends Controller
             if(Hash::check($password, $userPass)){
                 $token = $this->changeTokenApi($user);
                 if($request->filled('device_id')){
-                    helper::updateDeviceId($user->fcm_token,$request->device_id);
+                    firebase::updateDeviceId($user->fcm_token,$request->device_id);
+                    firebase::subscribeTopic($user->unit_id, $request->device_id);
                 }
-                return $this->MessageSuccess(['token' => $token, 'uid' => $user->fcm_token]);
+                return $this->MessageSuccess([
+                    'token' => $token, 
+                    'uid' => $user->fcm_token,
+                    'unit_id' => $user->unit_id,
+                    'user_id' => $user->id
+                ]);
             }else{
                 $validator->errors()->add('password','Wrong Password');
                 return $this->MessageError($validator->errors(), 422);
             }
         }
         else{
-            $id = rand(1000000000,9999999999);
-            $name = "Reinaldo Shandev P";
-            $user = $this->registerUser($id, $name, $login, $code_id, $password);
-            $token = $this->changeTokenApi($user);
-            $uid = helper::firebaseCreateUser(['email'=>$login.'@student.unand.ac.id', 'password'=>$request->password]);
-            $user->update(['fcm_token'=>$uid]);
-            if($request->filled('device_id')){
-                helper::updateDeviceId($uid,$request->device_id);
-            }
-            return $this->MessageSuccess(['token' => $token, 'uid'=>$uid]);
+            $validator->errors()->add('login','User Not Found');
+            return $this->MessageError($validator->errors(), 422);       
         }
     }
 
-    public function registerUser($id, $name, $email, $code, $pass)
+    public function registerUser($name, $username, $unit_id ,$role_id, $pass)
     {
         $user = new User();
-        $user->id = $id;
         $user->name = $name;
-        $user->email = $email;
-        $user->role = $code;
+        $user->username = $username;
+        $user->unit_id = $unit_id;
+        $user->role = $role_id;
         $user->password = Hash::make($pass);
         $user->save();
         return $user;
@@ -141,10 +139,10 @@ class userController extends Controller
                 $old_avatar = $user->avatar;
                 $fileext = $request->avatar->extension();
                 $filename = $user->FileNameAvatar().'.'.$fileext;
-                $user->avatar = $request->file('avatar')->storeAs('avatars', $filename);
+                $user->avatar = $request->file('avatar')->storeAs('avatars', $filename,'public');
                 $user->update();
                 if($old_avatar){
-                    Storage::disk('local')->delete($old_avatar);
+                    Storage::disk('public')->delete($old_avatar);
                 }
                 return $this->MessageSuccess($user);
             }
@@ -169,7 +167,7 @@ class userController extends Controller
         $user = app('auth')->user();
         $validator = Validator::make($request->all(), [
             'name'  => 'required',
-            'email' => 'required|unique:users,email,'.$user->id,
+            'username' => 'required|unique:users,username,'.$user->id,
         ]);
 
         if ($validator->fails()) {
@@ -178,7 +176,7 @@ class userController extends Controller
 
         try {
             $user->name = $request->name;
-            $user->email = $request->email;
+            $user->username = $request->username;
             $user->update();
             return $this->MessageSuccess($user);
         } catch (\Exception $th) {
@@ -222,6 +220,8 @@ class userController extends Controller
     {
         try {
             $user = app('auth')->user();
+            firebase::unSubscribeAllTopic($user->fcm_token);
+            firebase::updateDeviceId($user->fcm_token,"");
             $user->api_token = null;        
             $user->update();
             return $this->MessageSuccess($user);
@@ -242,4 +242,5 @@ class userController extends Controller
             return $this->MessageError(['isLogin'=>false],401);
         }
     }
+
 }

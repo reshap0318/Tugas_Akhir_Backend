@@ -9,21 +9,25 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Lumen\Auth\Authorizable;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class User extends Model implements AuthenticatableContract, AuthorizableContract
 {
     use Authenticatable, Authorizable, HasFactory;
 
     protected $table = 'users';
+    protected $primaryKey = 'id';
     public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
-        'id',
+        // 'id',
         'name',
-        'email',
-        'role',
+        'username',
         'avatar',
         'last_login',
+        'role',
+        'unit_id',
         'password',
         'api_token',
         'fcm_token'
@@ -50,9 +54,18 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         
         $patlink = rtrim(app()->basePath('public/storage'), '/');
         if($this->avatar && is_dir($patlink) && Storage::disk('public')->exists($this->avatar)){
-            return config('app.url')."/storage/".$this->avatar;
+            return url("/storage/".$this->avatar);
+            // return config('app.url')."/storage/".$this->avatar;
         }
         return "https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=".urlencode($this->name);
         
+    }
+
+    public static function boot()
+    {
+        parent::boot();
+        self::creating(function ($model) {
+            $model->id = Str::random(5);
+        });
     }
 }

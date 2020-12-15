@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\SIA;
 
+use App\Events\sendNewsNotificationEvent;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Resources\SIA\News\{detailCollection, listCollection};
-use App\Models\{News};
+use App\Http\Resources\News\{detailCollection, listCollection};
+use App\Models\{News,unit};
+use App\Helpers\firebase;
 use Illuminate\Support\Facades\Validator;
 
 class newsController extends Controller
@@ -13,7 +15,11 @@ class newsController extends Controller
     public function getList(Request $request)
     {
         try {
-            $data = News::all();
+            $id  = app('auth')->user()->unit_id;
+            $data = News::whereRAW("unit_id in (SELECT id FROM `units` where id='$id' or id in (select unit_id from units where id='$id')) or unit_id is null")->orderby('created_at','desc')->get();
+            if($id==""||$id==null){
+                $data = News::orderby('created_at','desc')->get();
+            }
             return $this->MessageSuccess(listCollection::collection($data));
         } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
@@ -23,7 +29,7 @@ class newsController extends Controller
     public function getData($id)
     {
         try {
-            $data = news::find($id);
+            $data = News::find($id);
             return $this->MessageSuccess(new detailCollection($data));
         } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
@@ -33,7 +39,7 @@ class newsController extends Controller
     public function edit($id)
     {
         try {
-            $data = news::find($id);
+            $data = News::find($id);
             return $this->MessageSuccess($data);
         } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
@@ -55,8 +61,12 @@ class newsController extends Controller
             $data = new news();
             $data->title = $request->title;
             $data->description = $request->description;
-            $data->user_id = app('auth')->user()->id;
+            $data->unit_id = app('auth')->user()->unit_id;
             $data->save();
+
+            if($data->id){
+                event(new sendNewsNotificationEvent($data));
+            }
             return $this->MessageSuccess($data);
         } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());

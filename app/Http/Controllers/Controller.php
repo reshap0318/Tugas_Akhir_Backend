@@ -13,6 +13,7 @@ class Controller extends BaseController
     public function MessageSuccess($success, $kode=null)
     {
         $kode = $kode ? $kode : $this->CodeSuccess;
+
         return response()->json([
             'success' => true,
             'data'    => $success,
