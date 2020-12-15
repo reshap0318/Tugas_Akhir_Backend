@@ -25,4 +25,14 @@ class PeriodTopic extends Model
             $model->id = Str::random(5);
         });
     }
+
+    public function topic()
+    {
+        return $this->hasOne(Topic::class, 'id', 'topic_id');
+    }
+
+    public function period()
+    {
+        return $this->hasOne(Period::class, 'id', 'period_id');
+    }
 }

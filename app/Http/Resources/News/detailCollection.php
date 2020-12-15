@@ -13,8 +13,9 @@ class detailCollection extends JsonResource
             'title' => $this->title,
             'description' => $this->description,
             'unit' => $this->unit ? $this->unit->name : "Universitas Andalas",
-            'creted_at' => $this->created_at,
-            'updated_at' => $this->updated_at
+            'unit_id' => $this->unit_id,
+            'tanggal'   => $this->created_at->format('F d, Y'),
+            'waktu'     => $this->created_at->format('g:i A'),
         ];
     }
 }

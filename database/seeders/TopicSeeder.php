@@ -29,7 +29,16 @@ class TopicSeeder extends Seeder
                     'topic_id' => $data->id
                 ]);
             }
-        }
+
+            $grup = Topic::create(['name' => 'Group Chat Bimbingan']);
+            $grup->id = "RSP03";
+            $grup->update();  
+            PeriodTopic::create([
+                'period_id' => $semesterAktif->id,
+                'topic_id' => 'RSP03'
+            ]);
+            
+        }        
         
     }
 }

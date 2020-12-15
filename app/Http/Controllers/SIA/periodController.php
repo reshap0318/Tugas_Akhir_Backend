@@ -44,7 +44,7 @@ class periodController extends Controller
                     return $this->MessageSuccess(count($newData)." Data Syncron into Database");
                 }
             }
-            return $this->MessageError("No Data Syn", 201);
+            return $this->MessageSuccess("No Data Syn");
         } catch (\Exception $th) {
             return $this->MessageError($th->getMessage());
         }
@@ -75,20 +75,15 @@ class periodController extends Controller
         }
     }
 
-    public function deleteTopic($id, Request $request)
+    public function deleteTopic($id, $topicId)
     {
-
-        $validator = Validator::make($request->all(), [
-            'topics'   => 'required|array'
-        ]);
-
-        if ($validator->fails()) {
-            return $this->MessageError($validator->errors(), 422);
-        }
-
         try {
-            $data = PeriodTopic::where('period_id',$id)->whereIn('topic_id',$request->topics)->delete();
-            return $this->MessageSuccess("Berhasil Menghapus Topic");
+            $data = PeriodTopic::where('period_id',$id)->where('topic_id',$topicId)->first();
+            if($data){
+                $data->delete();
+                return $this->MessageSuccess("Berhasil Menghapus Topic");
+            }
+            return $this->MessageError("Data Not Found");
         } catch (\Exception $e) {
             return $this->MessageError($e->getMessage());
         }

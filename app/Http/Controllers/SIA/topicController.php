@@ -4,10 +4,10 @@ namespace App\Http\Controllers\SIA;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Resources\Topic\{detailCollection, listCollection};
-use App\Models\{Topic};
+use App\Http\Resources\Topic\{detailCollection, listCollection, ActiveCollection};
+use App\Models\{Topic, PeriodTopic};
 use Illuminate\Support\Facades\Validator;
-use App\Http\Controllers\userController;
+use App\Http\Controllers\semesterController;
 
 class topicController extends Controller
 {
@@ -93,14 +93,32 @@ class topicController extends Controller
         }
     }
 
-    public function getListActif()
+    public function getListActive()
     {
         try {
-            $userController = new userController();
-            $periodAktif = $userController->periodAktif();
+            $semesterController = new semesterController();
+            $periodAktif = $semesterController->active();
             $data = [];
             if($periodAktif){
-                $data = Topic::whereRAW("id in (select topic_id from period_topics where period_id = '".$periodAktif->id."')")->get();
+                $idPeriod = $periodAktif->original['data']->id;
+                $data = PeriodTopic::where("period_id",$idPeriod)->get();
+                $data = ActiveCollection::collection($data);
+            }
+            return $this->MessageSuccess($data);
+        } catch (\Exception $e) {
+            return $this->MessageError($e->getMessage());
+        }
+    }
+
+    public function getListDeactive()
+    {
+        try {
+            $semesterController = new semesterController();
+            $periodAktif = $semesterController->active();
+            $data = [];
+            if($periodAktif){
+                $idPeriod = $periodAktif->original['data']->id;
+                $data = Topic::whereRaw("id not in (select topic_id from period_topics where period_id = $idPeriod)")->get();
                 $data = listCollection::collection($data);
             }
             return $this->MessageSuccess($data);

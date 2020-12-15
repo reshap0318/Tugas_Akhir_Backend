@@ -11,7 +11,6 @@ class listCollection extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'period' => $this->name,
             'creted_at' => $this->created_at,
             'updated_at' => $this->updated_at
         ];

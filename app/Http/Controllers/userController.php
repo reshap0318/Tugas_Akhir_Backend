@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{User, Period};
+use App\Models\{User};
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Hash, Validator, Storage};
-use App\Helpers\{firebase, siaWeb};
+use App\Helpers\{firebase};
 use App\Http\Resources\{profileCollection};
 
 class userController extends Controller
@@ -82,12 +82,13 @@ class userController extends Controller
                 $token = $this->changeTokenApi($user);
                 if($request->filled('device_id')){
                     firebase::updateDeviceId($user->fcm_token,$request->device_id);
+                    firebase::subscribeTopic($user->unit_id, $request->device_id);
                 }
-                $semesterAktif = $this->periodAktif();
                 return $this->MessageSuccess([
                     'token' => $token, 
                     'uid' => $user->fcm_token,
-                    'semester_aktif' => "Semester ".$semesterAktif->periode
+                    'unit_id' => $user->unit_id,
+                    'user_id' => $user->id
                 ]);
             }else{
                 $validator->errors()->add('password','Wrong Password');
@@ -219,6 +220,8 @@ class userController extends Controller
     {
         try {
             $user = app('auth')->user();
+            firebase::unSubscribeAllTopic($user->fcm_token);
+            firebase::updateDeviceId($user->fcm_token,"");
             $user->api_token = null;        
             $user->update();
             return $this->MessageSuccess($user);
@@ -240,21 +243,4 @@ class userController extends Controller
         }
     }
 
-    public function periodAktif()
-    {
-        try {
-            $dataSia = siaWeb::get('v1/semester-aktif');
-            if($dataSia){
-                return $dataSia->data;
-            }
-            $lastPeriod = Period::latest('id')->first();
-            return json_decode(json_encode([
-                'id' => $lastPeriod->id,
-                'tahun' => explode(" ",$lastPeriod->name)[1],
-                'periode' => explode(" ",$lastPeriod->name)[0]
-            ]));
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
 }

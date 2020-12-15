@@ -15,5 +15,13 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\ExampleEvent::class => [
             \App\Listeners\ExampleListener::class,
         ],
+        \App\Events\sendNewsNotificationEvent::class => [
+            \App\Listeners\sendNewsNotificationListener::class
+        ]
     ];
+
+    public function shouldDiscoverEvents()
+    {
+        return true;
+    }
 }
