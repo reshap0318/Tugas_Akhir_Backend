@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Helpers;
-use Illuminate\Support\Facades\Mail;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 
@@ -158,8 +157,48 @@ class firebase
                 $notification = Notification::fromArray([
                     'title' => $data->sender->name,
                     'body' => $data->message,
+                    'type' => 'chat'
                 ]);
                 $message = CloudMessage::withTarget('token', $deviceId)->withNotification($notification);
+                $messaging->send($message);
+                return true;
+            }
+            return false;
+        }
+        catch (\Exception $e) {
+            return false; 
+        }
+    }
+
+    public static function sendChatGroup($data)
+    {
+        try{
+            $receiverUid = $data->receiver->fcm_token;
+            $messaging = app('firebase.messaging');
+            $database = app('firebase.database');
+
+            $newKey = $database->getReference('Chat')->push()->getKey();
+            $updates = [ 
+                'Chat/'.$newKey => [
+                    'id' => $data->id,
+                    'sender' => $data->sender_id,
+                    'receiver' => $data->receiver_id,
+                    'topic_period' => 'RSP01',
+                    'message' => $data->message,
+                    'isRead' => 0,
+                    'img' => $data->path_img ? $data->getImg() : "",
+                    'time' => $data->time
+                ]
+            ];
+            $result = $database->getReference()->update($updates);
+            $deviceId =  $result->getChild('Users/'.$receiverUid.'/device-id')->getValue();
+            if($deviceId){
+                $notification = Notification::fromArray([
+                    'title' => "Group Bimbingan ".$data->receiver->name,
+                    'body' => $data->message,
+                    'type' => 'chat'
+                ]);
+                $message = CloudMessage::withTarget('topic', $data->receiver->username)->withNotification($notification);
                 $messaging->send($message);
                 return true;
             }

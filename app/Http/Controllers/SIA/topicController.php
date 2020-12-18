@@ -101,7 +101,7 @@ class topicController extends Controller
             $data = [];
             if($periodAktif){
                 $idPeriod = $periodAktif->original['data']->id;
-                $data = PeriodTopic::where("period_id",$idPeriod)->get();
+                $data = PeriodTopic::where("period_id",$idPeriod)->where('topic_id','<>','RSP03')->get();
                 $data = ActiveCollection::collection($data);
             }
             return $this->MessageSuccess($data);

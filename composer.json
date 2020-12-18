@@ -6,7 +6,9 @@
     "type": "project",
     "require": {
         "php": "^7.3",
+        "barryvdh/laravel-dompdf": "^0.8.7",
         "flipbox/lumen-generator": "^8.0",
+        "illuminate/mail": "^8.19",
         "kreait/laravel-firebase": "^2.4",
         "laravel/lumen-framework": "^8.0",
         "league/flysystem": "^1.1"

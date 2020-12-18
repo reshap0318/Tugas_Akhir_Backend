@@ -8,6 +8,7 @@ use App\Helpers\{siaWeb,firebase};
 use App\Models\{Message, User, PeriodTopic};
 use Illuminate\Support\Facades\{DB, Validator, Storage};
 use App\Http\Resources\Bimbingan\listCollection;
+use App\Http\Controllers\semesterController;
 
 class bimbinganController extends Controller
 {
@@ -30,6 +31,50 @@ class bimbinganController extends Controller
                 return $this->MessageSuccess($data);
             }
             return $this->MessageError("Web SIA Not Active");
+        } catch (\Exception $e) {
+            return $this->MessageError($e->getMessage());
+        }
+    }
+
+    public function getGroupChat()
+    {
+        try {
+            $user = app('auth')->user();
+            $dosenId = "";
+            $dosenNama = "";
+            $dosenAvatar = "";
+            $dataSia = siaWeb::get("/v1/mahasiswa/$user->username/pembimbing");
+            if($dataSia){
+                $dosenNip = $dataSia->data->nip;
+                $dataDosen = User::where('username',$dosenNip)->where('role',2)->first();
+                if($dataDosen){
+                    $dosenId = $dataDosen->id;
+                    $dosenNama = $dataDosen->nama;
+                    $dosenAvatar = $dataDosen->getAvatar();
+                }
+            }
+            
+            $semesterController = new semesterController();
+            $periodAktiv = $semesterController->active()->original['data']->id;
+
+            if($dosenId){
+                $topicPeriodId = PeriodTopic::where('topic_id','RSP03')->where('period_id',$periodAktiv)->first();
+                if(!$topicPeriodId){
+                    $topicPeriodId = PeriodTopic::create(['topic_id' => 'RSP03', 'period_id' => $periodAktiv]);
+                }
+
+                return $this->MessageSuccess([
+                    'to' => $dosenId,
+                    'topicPeriodId' => $topicPeriodId->id,
+                    'topic' =>  $topicPeriodId->topic->name,
+                    'period' =>  $topicPeriodId->period->name,
+                    'totalChat' => 0,
+                    'lastChat' => 0,
+                    'namaUser' => $dosenNama,
+                    'avataUser' => $dosenAvatar
+                ]);
+            }
+            return $this->MessageError("ada error");
         } catch (\Exception $e) {
             return $this->MessageError($e->getMessage());
         }
@@ -122,6 +167,40 @@ class bimbinganController extends Controller
             $data = new listCollection($messages);
             return $this->MessageSuccess($data);
 
+        } catch (\Exception $e) {
+            return $this->MessageError($e->getMessage());
+        }
+    }
+
+    public function cetakChatBimbingan($receiverId, $topicPeriodId)
+    {
+        try {
+            $senderId = app('auth')->user()->id;
+            $data = Message::where(function ($query) use ($senderId, $receiverId) {
+                $query->where('sender_id', $senderId)->where('receiver_id',$receiverId);
+            })->orwhere(function ($query) use ($senderId, $receiverId) {
+                $query->where('receiver_id', $senderId)->where('sender_id',$receiverId);
+            })->where('topic_period_id',$topicPeriodId)->orderby('time','asc')->get();
+
+            $topicPeriod = PeriodTopic::find($topicPeriodId);
+            $receiverPdf = User::find($receiverId);
+
+            $dataEmail = [
+                'pembimbing' => app('auth')->user()->name,
+                'pembimbing_id' => app('auth')->user()->id,
+                'mahasiswa' => $receiverPdf->name,
+                'mahasiswa_id' => $receiverPdf->id,
+                'topik' => $topicPeriod->topic->name,
+                'period' => $topicPeriod->period->name,
+                'to' => app('auth')->user()->email,
+                'title' => 'Cetak Laporan Rekap Bimbingan',
+                'titlePdf' => str_replace(" ", "_", "rekap_bimbingan_".app('auth')->user()->name."_W_".$receiverPdf->name."_topik_".$topicPeriod->topic->name."_".$topicPeriod->period->name.".pdf")
+            ];
+            if(app('auth')->user()->email){
+                $sendEmail = siaWeb::sendMail((object)$dataEmail, $data);
+                return $this->MessageSuccess($sendEmail);
+            }
+            return $this->MessageError("Set Email Terlebih Dahulu", 422);
         } catch (\Exception $e) {
             return $this->MessageError($e->getMessage());
         }

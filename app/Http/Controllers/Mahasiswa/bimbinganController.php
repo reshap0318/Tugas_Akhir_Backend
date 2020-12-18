@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\{Message, User, PeriodTopic};
 use Illuminate\Support\Facades\{DB, Validator, Storage};
 use App\Http\Resources\Bimbingan\listCollection;
+use App\Http\Controllers\semesterController;
 
 class bimbinganController extends Controller
 {
@@ -17,11 +18,55 @@ class bimbinganController extends Controller
         # berisikan list topic perpriode dan banyak chat dallam chat tersebut
         try {
             $userId = app('auth')->user()->id;
-            $data = Message::select('messages.*', DB::RAW("count(messages.id) as totalChat, max(time) as lastChat"))->join('period_topics', 'period_topics.id', '=', 'messages.topic_period_id')->where('sender_id',$userId)->orWhere('receiver_id',$userId)->groupby(['period_topics.period_id', 'period_topics.topic_id'])->get();
+            $data = Message::select('messages.*', DB::RAW("count(messages.id) as totalChat, max(time) as lastChat"))->join('period_topics', 'period_topics.id', '=', 'messages.topic_period_id')->where('sender_id',$userId)->orWhere('receiver_id',$userId)->where('period_topics.topic_id','<>','RSP03')->groupby(['period_topics.period_id', 'period_topics.topic_id'])->get();
             
             $data = listCollection::collection($data);
             return $this->MessageSuccess($data);
 
+        } catch (\Exception $e) {
+            return $this->MessageError($e->getMessage());
+        }
+    }
+
+    public function getGroupChat()
+    {
+        try {
+            $user = app('auth')->user();
+            $dosenId = "";
+            $dosenNama = "";
+            $dosenAvatar = "";
+            $dataSia = siaWeb::get("/v1/mahasiswa/$user->username/pembimbing");
+            if($dataSia){
+                $dosenNip = $dataSia->data->nip;
+                $dataDosen = User::where('username',$dosenNip)->where('role',2)->first();
+                if($dataDosen){
+                    $dosenId = $dataDosen->id;
+                    $dosenNama = $dataDosen->name;
+                    $dosenAvatar = $dataDosen->getAvatar();
+                }
+            }
+            
+            $semesterController = new semesterController();
+            $periodAktiv = $semesterController->active()->original['data']->id;
+
+            if($dosenId){
+                $topicPeriodId = PeriodTopic::where('topic_id','RSP03')->where('period_id',$periodAktiv)->first();
+                if(!$topicPeriodId){
+                    $topicPeriodId = PeriodTopic::create(['topic_id' => 'RSP03', 'period_id' => $periodAktiv]);
+                }
+
+                return $this->MessageSuccess([
+                    'to' => $dosenId,
+                    'topicPeriodId' => $topicPeriodId->id,
+                    'topic' =>  $topicPeriodId->topic->name,
+                    'period' =>  $topicPeriodId->period->name,
+                    'totalChat' => 0,
+                    'lastChat' => 0,
+                    'namaUser' => "Group Bimbingan ".$dosenNama,
+                    'avataUser' => $dosenAvatar
+                ]);
+            }
+            return $this->MessageError("ada error");
         } catch (\Exception $e) {
             return $this->MessageError($e->getMessage());
         }
@@ -70,6 +115,41 @@ class bimbinganController extends Controller
             $messages->save();
             if($messages->id){
                 firebase::sendChat($messages);
+            }
+            return $this->MessageSuccess("Berhasil Menambahkan Data");
+        } catch (\Exception $e) {
+            return $this->MessageError($e->getMessage());
+        }
+    }
+
+    public function sendGroupChat(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'receiverId'   => 'required',
+            'message' => 'required',
+            'topicPeriodId' => 'required',
+            'img' => 'image|mimes:jpg,png,jpeg,gif',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->MessageError($validator->errors(), 422);
+        }
+        
+        try {
+            $messages = new Message();
+            $messages->sender_id = app('auth')->user()->id;
+            $messages->receiver_id = $request->receiverId;
+            $messages->message = $request->message;
+            $messages->topic_period_id = $request->topicPeriodId;
+            if ($request->hasFile('img') && $request->img->isValid()) {
+                $fileext = $request->img->extension();
+                $filename = 'bimbingan_'.time().'.'.$fileext;
+                $messages->path_img = $request->file('img')->storeAs('imgs', $filename,'public');
+            }
+
+            $messages->save();
+            if($messages->id){
+                firebase::sendChatGroup($messages);
             }
             return $this->MessageSuccess("Berhasil Menambahkan Data");
         } catch (\Exception $e) {

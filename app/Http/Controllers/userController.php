@@ -7,7 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Hash, Validator, Storage};
-use App\Helpers\{firebase};
+use App\Helpers\{firebase, siaWeb};
 use App\Http\Resources\{profileCollection};
 
 class userController extends Controller
@@ -83,6 +83,15 @@ class userController extends Controller
                 if($request->filled('device_id')){
                     firebase::updateDeviceId($user->fcm_token,$request->device_id);
                     firebase::subscribeTopic($user->unit_id, $request->device_id);
+                    if($code_id==$this->mahasiswaCode){
+                        $dataSia = siaWeb::get("/v1/mahasiswa/$user->username/pembimbing");
+                        if($dataSia){
+                            $dosenNip = $dataSia->data->nip;
+                            firebase::subscribeTopic($dosenNip, $request->device_id);
+                        }
+                    }else if($code_id ==  $this->dosenCode){
+                        firebase::subscribeTopic($user->username, $request->device_id);
+                    }
                 }
                 return $this->MessageSuccess([
                     'token' => $token, 
@@ -166,8 +175,7 @@ class userController extends Controller
     {
         $user = app('auth')->user();
         $validator = Validator::make($request->all(), [
-            'name'  => 'required',
-            'username' => 'required|unique:users,username,'.$user->id,
+            'email' => 'required|email:rfc,dns|unique:users,email,'.$user->id,
         ]);
 
         if ($validator->fails()) {
@@ -175,8 +183,7 @@ class userController extends Controller
         }
 
         try {
-            $user->name = $request->name;
-            $user->username = $request->username;
+            $user->email = $request->email;
             $user->update();
             return $this->MessageSuccess($user);
         } catch (\Exception $th) {

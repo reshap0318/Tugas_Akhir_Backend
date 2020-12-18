@@ -17,6 +17,7 @@ class CreateUserTable extends Migration
             $table->string('id',5)->primary();
             $table->string('name',32);
             $table->string('username',32)->unique();
+            $table->string('email',32)->nullable()->unique();
             $table->string('avatar')->nullable();
             $table->timestamp('last_login')->nullable();
             $table->tinyInteger('role');

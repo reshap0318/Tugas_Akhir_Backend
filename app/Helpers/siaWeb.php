@@ -2,6 +2,9 @@
 
 namespace App\Helpers;
 
+use Illuminate\Support\Facades\Mail;
+use Barryvdh\DomPDF\Facade as PDF;
+
 class siaWeb
 {
     public static function get($link)
@@ -65,5 +68,17 @@ class siaWeb
         } catch (\Exception $th) {
             return false;
         }
+    }
+
+    public static function sendMail($dataEmail, $dataChat)
+    {  
+        $pdf = PDF::loadView('send.pdfTemplate', array('data' => $dataEmail, 'chats'=>$dataChat));
+        $pdf->setPaper('a4', 'landscape');
+        Mail::send('send.emailTemplate', array('data' => $dataEmail), function($message)use($dataEmail, $pdf) {
+            $message->to($dataEmail->to, $dataEmail->to)
+                    ->subject($dataEmail->title)
+                    ->attachData($pdf->output(), $dataEmail->titlePdf);
+        });
+        return "Berhasil Mengirim Email";
     }
 }
