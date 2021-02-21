@@ -81,6 +81,9 @@ class userController extends Controller
             if(Hash::check($password, $userPass)){
                 $token = $this->changeTokenApi($user);
                 if($request->filled('device_id')){
+                    firebase::unSubscribeAllTopic($user->fcm_token);
+                    firebase::unSubscribeAllTopicByDeviceId($request->device_id);
+                    
                     firebase::updateDeviceId($user->fcm_token,$request->device_id);
                     firebase::subscribeTopic($user->unit_id, $request->device_id);
                     if($code_id==$this->mahasiswaCode){
@@ -175,7 +178,7 @@ class userController extends Controller
     {
         $user = app('auth')->user();
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email:rfc,dns|unique:users,email,'.$user->id,
+            'email' => 'required|email|unique:users,email,'.$user->id,
         ]);
 
         if ($validator->fails()) {

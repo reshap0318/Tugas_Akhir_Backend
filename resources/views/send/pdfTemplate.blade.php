@@ -22,10 +22,19 @@
 <body>
     <h1>{{ $data->title }}</h1>
     <p>Berikut Bimbingan Bapak / Ibu dengan Mahasiswa {{ $data->mahasiswa }} </p>
+    <p> 
+        <ul>
+            <li>Nama Dosen : {{ $data->pembimbing }}</li>
+            <li>Nama Mahasiswa : {{ $data->mahasiswa }}</li>
+            <li>Topik : {{ $data->topik }}</li>
+            <li>Period : {{ $data->period }}</li>
+        </ul>    
+    </p>
+
     <div style="overflow-x:auto;">
         <table>
             <tr>
-                <th>Waktu</th>
+                <th style="width: 120px">Waktu</th>
                 <th>{{ $data->pembimbing }}</th>
                 <th>{{ $data->mahasiswa }}</th>
             </tr>
@@ -35,7 +44,7 @@
                     <td> 
                         @if ($chat->sender_id == $data->pembimbing_id)
                             @if ($chat->path_img)
-                                {{ $chat->getImg() }}    
+                                {{ $chat->getImg() }}
                             @else
                                 {{ $chat->message }}
                             @endif
@@ -44,7 +53,7 @@
                     <td>
                         @if ($chat->sender_id != $data->pembimbing_id)
                             @if ($chat->path_img)
-                                {{ $chat->getImg() }}    
+                                {{ $chat->getImg() }}
                             @else
                                 {{ $chat->message }}
                             @endif

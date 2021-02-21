@@ -65,7 +65,18 @@ class newsController extends Controller
             $data->save();
 
             if($data->id){
-                event(new sendNewsNotificationEvent($data));
+                // event(new sendNewsNotificationEvent($data));
+                $mUnitId = $data->unit_id;
+                $notice = [
+                    'title' => $data->title,
+                    'body' => $data->description,
+                    'type' => 'news',
+                    'id' => $data->id
+                ];
+                $units = unit::whereRaw("id = $mUnitId or unit_id = $mUnitId")->get();
+                foreach($units as $unit){
+                    firebase::sendNotificationToTopic($unit->id, $notice);
+                }
             }
             return $this->MessageSuccess($data);
         } catch (\Exception $th) {

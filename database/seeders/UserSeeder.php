@@ -63,6 +63,24 @@ class UserSeeder extends Seeder
                 'fcm_token' => Str::random(20)
             ],
             [
+                'name' => 'DIO HARVANDY',
+                'username' => '1711522004',
+                'role' => $idMahasiswa,
+                'unit_id' => 53,
+                'password' => Hash::make('root'),
+                'api_token' => '',
+                'fcm_token' => Str::random(20)
+            ],
+            [
+                'name' => 'AFIF MAULANA ISMAN',
+                'username' => '1711522012',
+                'role' => $idMahasiswa,
+                'unit_id' => 53,
+                'password' => Hash::make('root'),
+                'api_token' => '',
+                'fcm_token' => Str::random(20)
+            ],
+            [
                 'name' => 'Husnil Kamil',
                 'username' => '19820118200', //'19820118200'
                 'role' => $idDosen,
@@ -74,6 +92,15 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Fajril Akbar',
                 'username' => '198001102008121002', //198410062012121001
+                'role' => $idDosen,
+                'unit_id' => 52,
+                'password' => Hash::make('root'),
+                'api_token' => '',
+                'fcm_token' => Str::random(20)
+            ],
+            [
+                'name' => 'Ricky Akbar',
+                'username' => '198410062012121001', //198410062012121001
                 'role' => $idDosen,
                 'unit_id' => 52,
                 'password' => Hash::make('root'),

@@ -11,14 +11,16 @@ use Illuminate\Support\Facades\{DB, Validator, Storage};
 use App\Http\Resources\Bimbingan\listCollection;
 use App\Http\Controllers\semesterController;
 
+
 class bimbinganController extends Controller
 {
     public function getListBimbingan()
     {
         # berisikan list topic perpriode dan banyak chat dallam chat tersebut
         try {
+            
             $userId = app('auth')->user()->id;
-            $data = Message::select('messages.*', DB::RAW("count(messages.id) as totalChat, max(time) as lastChat"))->join('period_topics', 'period_topics.id', '=', 'messages.topic_period_id')->where('sender_id',$userId)->orWhere('receiver_id',$userId)->where('period_topics.topic_id','<>','RSP03')->groupby(['period_topics.period_id', 'period_topics.topic_id'])->get();
+            $data = Message::select('messages.*', DB::RAW("count(messages.id) as totalChat, max(time) as lastChat"))->join('period_topics', 'period_topics.id', '=', 'messages.topic_period_id')->where('period_topics.topic_id','<>','RSP03')->where('sender_id',$userId)->orWhere('receiver_id',$userId)->groupby(['period_topics.period_id', 'period_topics.topic_id'])->orderby('time','desc')->get();
             
             $data = listCollection::collection($data);
             return $this->MessageSuccess($data);
@@ -35,6 +37,7 @@ class bimbinganController extends Controller
             $dosenId = "";
             $dosenNama = "";
             $dosenAvatar = "";
+            $dosenNip = "";
             $dataSia = siaWeb::get("/v1/mahasiswa/$user->username/pembimbing");
             if($dataSia){
                 $dosenNip = $dataSia->data->nip;
@@ -58,12 +61,9 @@ class bimbinganController extends Controller
                 return $this->MessageSuccess([
                     'to' => $dosenId,
                     'topicPeriodId' => $topicPeriodId->id,
-                    'topic' =>  $topicPeriodId->topic->name,
-                    'period' =>  $topicPeriodId->period->name,
-                    'totalChat' => 0,
-                    'lastChat' => 0,
-                    'namaUser' => "Group Bimbingan ".$dosenNama,
-                    'avataUser' => $dosenAvatar
+                    'groupChanel' => $dosenNip,
+                    'groupName' => "Group Bimbingan ".$dosenNama,
+                    'groupAvatar' => $dosenAvatar
                 ]);
             }
             return $this->MessageError("ada error");
@@ -114,7 +114,14 @@ class bimbinganController extends Controller
 
             $messages->save();
             if($messages->id){
-                firebase::sendChat($messages);
+                firebase::sendChat($messages); 
+                firebase::sendNotificationToUID($messages->receiver->fcm_token,[
+                    'title' => $messages->sender->name,
+                    'body' => $messages->message,
+                    'type' => 'chat',
+                    'tanggal' => date("Y-m-d"),
+                    'waktu' => date("H:i")
+                ], false); 
             }
             return $this->MessageSuccess("Berhasil Menambahkan Data");
         } catch (\Exception $e) {
@@ -126,6 +133,7 @@ class bimbinganController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'receiverId'   => 'required',
+            'groupchanel' => 'required',
             'message' => 'required',
             'topicPeriodId' => 'required',
             'img' => 'image|mimes:jpg,png,jpeg,gif',
@@ -149,6 +157,7 @@ class bimbinganController extends Controller
 
             $messages->save();
             if($messages->id){
+                $messages->groupchanel = $request->groupchanel;
                 firebase::sendChatGroup($messages);
             }
             return $this->MessageSuccess("Berhasil Menambahkan Data");
@@ -161,8 +170,12 @@ class bimbinganController extends Controller
     {
         try {
             $data = Message::where('id',$chatId)->where('sender_id',app('auth')->user()->id);
-            $data->delete();
-            return $this->MessageSuccess("berhasil menghapus chat");
+            if($data->get()->isNotEmpty()){
+                firebase::deleteMessage($chatId, app('auth')->user()->id);
+                $data->delete();
+                return $this->MessageSuccess("berhasil menghapus chat");
+            }
+            return $this->MessageError("gagal menghapus data");
         } catch (\Exception $e) {
             return $this->MessageError($e->getMessage());
         }
@@ -199,14 +212,20 @@ class bimbinganController extends Controller
                 $messages = new Message();
                 $messages->sender_id = app('auth')->user()->id;
                 $messages->receiver_id = $dosenId;
-                $messages->message = "Topik Bimbingan : ".PeriodTopic::find($request->topicPeriodId)->topic->name;
+                $messages->message = "Jenis Bimbingan : ".PeriodTopic::find($request->topicPeriodId)->topic->name;
                 $messages->topic_period_id = $request->topicPeriodId;
                 $messages->save();
                 if($messages->id){
                     firebase::sendChat($messages);
+                    firebase::sendNotificationToUID($messages->receiver->fcm_token,[
+                        'title' => $messages->sender->name,
+                        'body' => $messages->message,
+                        'type' => 'chat',
+                        'tanggal' => date("Y-m-d"),
+                        'waktu' => date("H:i")
+                    ]); 
                 }
             }
-
             $data = new listCollection($messages);
             return $this->MessageSuccess($data);
 
