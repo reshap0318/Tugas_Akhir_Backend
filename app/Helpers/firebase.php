@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Helpers;
-use Illuminate\Support\Facades\Mail;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 
@@ -31,14 +30,6 @@ class firebase
                 $topic = "Unand";
             }
 
-            //unsuscribe 
-            $appInstance = $messaging->getAppInstance($deviceId);
-            $subscriptions = $appInstance->topicSubscriptions();
-            foreach ($subscriptions as $subscription) {
-                if($subscription->registrationToken()==$deviceId){
-                    $messaging->unsubscribeFromTopic($subscription->topic(), $deviceId);
-                }
-            }
             if($deviceId){
                 $messaging->subscribeToTopic($topic, $deviceId);
                 return true;
@@ -67,13 +58,25 @@ class firebase
         }
     }
 
+    public static function unSubscribeAllTopicByDeviceId($deviceId)
+    {
+        //unsuscribe 
+        $messaging = app('firebase.messaging');
+        $appInstance = $messaging->getAppInstance($deviceId);
+        $subscriptions = $appInstance->topicSubscriptions();
+        foreach ($subscriptions as $subscription) {
+            if($subscription->registrationToken()==$deviceId){
+                $messaging->unsubscribeFromTopic($subscription->topic(), $deviceId);
+            }
+        }
+    }
+
     public static function unSubscribeAllTopic(string $uid)
     {
         try{
             $messaging = app('firebase.messaging');
             $database = app('firebase.database');
             $deviceId = $database->getReference('Users/'.$uid.'/device-id')->getValue();
-            return $deviceId;
             if($deviceId){
                 //unsuscribe 
                 $appInstance = $messaging->getAppInstance($deviceId);
@@ -92,7 +95,7 @@ class firebase
         }
     }
 
-    public static function sendNotificationToUID(string $uid,array $data)
+    public static function sendNotificationToUID(string $uid,array $data, $chat=true)
     {
         try{
             $messaging = app('firebase.messaging');
@@ -100,8 +103,10 @@ class firebase
 
             $newKey = $database->getReference('Users')->push()->getKey();
             $updates = [ 'Users/'.$uid.'/Notification/'.$newKey => $data ];
-            $result = $database->getReference()->update($updates);
-            $deviceId =  $result->getChild('Users/'.$uid.'/device-id')->getValue();
+            if($chat){
+                $result = $database->getReference()->update($updates);
+            }
+            $deviceId =  $database->getReference('Users/'.$uid.'/device-id')->getValue();
             if($deviceId){
                 $notification = Notification::fromArray($data);
                 $message = CloudMessage::withTarget('token', $deviceId)->withNotification($notification)->withData($data);
@@ -149,24 +154,64 @@ class firebase
                     'message' => $data->message,
                     'isRead' => 0,
                     'img' => $data->path_img ? $data->getImg() : "",
-                    'time' => $data->time
+                    'time' => date("H:i.Y-m-d")
                 ]
             ];
             $result = $database->getReference()->update($updates);
-            $deviceId =  $result->getChild('Users/'.$receiverUid.'/device-id')->getValue();
-            if($deviceId){
-                $notification = Notification::fromArray([
-                    'title' => $data->sender->name,
-                    'body' => $data->message,
-                ]);
-                $message = CloudMessage::withTarget('token', $deviceId)->withNotification($notification);
-                $messaging->send($message);
-                return true;
-            }
-            return false;
+            return true;
         }
         catch (\Exception $e) {
             return false; 
         }
+    }
+
+    public static function sendChatGroup($data)
+    {
+        try{
+            $messaging = app('firebase.messaging');
+            $database = app('firebase.database');
+
+            $newKey = $database->getReference('Chat')->push()->getKey();
+            $updates = [ 
+                'Group-Chat/'.$data->groupchanel.'/'.$newKey => [
+                    'id' => $data->id,
+                    'sender' => $data->sender_id,
+                    'senderName' => $data->sender->name,
+                    'senderAvatar' => $data->sender->getAvatar(),
+                    'receiver' => $data->receiver_id,
+                    'receiverName' => $data->receiver->name,
+                    'topic_period' => 'RSP01',
+                    'message' => $data->message,
+                    'img' => $data->path_img ? $data->getImg() : "",
+                    'time' => date("H:i.Y-m-d")
+                ]
+            ];
+            $result = $database->getReference()->update($updates);
+            $notification = Notification::fromArray([
+                'title' => "Group Bimbingan ".$data->receiver->name,
+                'body' => $data->message,
+                'type' => 'chat-group'
+            ]);
+            $message = CloudMessage::withTarget('topic', $data->groupchanel)->withNotification($notification);
+            $messaging->send($message);
+            return true;
+        }
+        catch (\Exception $e) {
+            return false; 
+        }
+    }
+
+    public static function deleteMessage($idMessage, $userId)
+    {
+        $database = app('firebase.database');
+        $ref = $database->getReference('Chat');
+        $data = $ref->orderByChild('id')->equalTo((int)$idMessage)->getSnapshot()->getValue();
+        if($data){
+            $set = array_keys($data)[0];
+            $ref->update([$set=>null]);
+            return true;
+        }   
+        return false;
+        
     }
 }

@@ -54,9 +54,18 @@ $router->group(['prefix' => 'dosen'], function () use ($router) {
     $router->group(['middleware' => ['auth','role:2'], 'as' => 'dosen'], function () use ($router) {
         $router->group(['namespace' => 'Dosen'], function () use ($router){
             $router->get('/bimbingan', ['as'=>'getList', 'uses' => 'bimbinganController@getListData']);
+            $router->get('/bimbingan/last-seen', ['as'=>'getAllListBimbingan', 'uses' => 'bimbinganController@lastSeen']);
+            $router->get('/bimbingan/group-chat', ['as'=>'groupChat', 'uses' => 'bimbinganController@getGroupChat']);
+
+            $router->post('/bimbingan/cetak/{receiverId}/{topicPeriodId}', ['as'=>'cetak', 'uses' => 'bimbinganController@cetakChatBimbingan']);
+            $router->post('/bimbingan/cetak-period/{receiverId}/{periodId}', ['as'=>'cetak-period', 'uses' => 'bimbinganController@cetakChatBimbinganPeriod']);
+
             $router->post('/bimbingan/send', ['as'=>'send', 'uses' => 'bimbinganController@send']);
-            $router->post('/list-bimbingan/{mhsId}/create', ['as' => 'listBimbingan', 'uses' => 'bimbinganController@createBimbingan']);
+            $router->delete('/bimbingan/{chatId}/delete', ['as'=>'delete', 'uses' => 'bimbinganController@delete']);
+            $router->post('/bimbingan/send-group-chat', ['as'=>'sendGroupChat', 'uses' => 'bimbinganController@sendGroupChat']);
+
             $router->get('/list-bimbingan/{mhsId}', ['as' => 'listBimbingan', 'uses' => 'bimbinganController@getListBimbingan']);
+            $router->post('/list-bimbingan/{mhsId}/create', ['as' => 'listBimbingan', 'uses' => 'bimbinganController@createBimbingan']);
         });
         $router->group(['prefix'=>'mahasiswa/{nim}','namespace' => 'Mahasiswa'], function () use ($router){
             $router->get('', 'myController@getData');
@@ -99,9 +108,11 @@ $router->group(['prefix' => 'mahasiswa'], function () use ($router) {
         });
         $router->group(['prefix' => 'bimbingan', 'as' => 'bimbingan'], function () use ($router) {
             $router->get('/', ['as'=>'getList', 'uses' => 'bimbinganController@getListBimbingan']);
+            $router->get('/group-chat', ['as'=>'groupChat', 'uses' => 'bimbinganController@getGroupChat']);
             $router->get('/detail/{receiverId}/{topicPeriodId}', ['as'=>'detail', 'uses' => 'bimbinganController@getDetailChat']);
             $router->post('/create', ['as'=>'createBimbingan', 'uses' => 'bimbinganController@createBimbingan']);
             $router->post('/send', ['as'=>'send', 'uses' => 'bimbinganController@send']);
+            $router->post('/send-group-chat', ['as'=>'sendGroupChat', 'uses' => 'bimbinganController@sendGroupChat']);
             $router->delete('/{chatId}/delete', ['as'=>'delete', 'uses' => 'bimbinganController@delete']);
         });
         
@@ -117,6 +128,7 @@ $router->group(['prefix' => 'user'], function () use ($router) {
     $router->group(['middleware' => ['auth']], function () use ($router) {
         $router->get('profile', ['uses' => 'userController@profile']);
         $router->get('semester-active', 'semesterController@active');
+        $router->get('period', ['uses' => 'SIA\periodController@getList']);
         $router->group(['prefix' => 'news', 'as' => 'news'], function () use ($router) {
             $router->get('/', ['as'=>'getList', 'uses' => 'SIA\newsController@getList']);
             $router->get('/{id}', ['as'=>'getData', 'uses' => 'SIA\newsController@getData']);
